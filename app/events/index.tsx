@@ -1,49 +1,31 @@
-import { FlatList, Text, View, StyleSheet, TextInput } from 'react-native';
-import EventRow from '../../src/components/EventRow';
-import { events } from '../../src/data/events';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { fetchEvents } from '../../src/lib/api';
+import type { CampusEvent } from '../../src/data/events';
 
 export default function EventsScreen() {
-  const [savedIds, setSavedIds] = useState<number[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [events, setEvents] = useState<CampusEvent[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const toggleSave = (id: number) => {
-    setSavedIds((ids) => 
-      ids.includes(id) 
-        ? ids.filter((x) => x !== id) 
-        : [...ids, id]                
-    );
-  };
-
-  const filteredEvents = events.filter((e) =>
-    e.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    fetchEvents()
+      .then(setEvents)
+      .catch((e) => setError(e.message));
+  }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerText}>
-        Long-press an event to save it. Saved: {savedIds.length}
-      </Text>
-
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search events"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+      {/* Қателік шықса, жоғарыда көрсетеміз */}
+      {error && <Text style={styles.error}>Қате: {error}</Text>}
 
       <FlatList
-        data={filteredEvents}
-        keyExtractor={(e) => String(e.id)}
-        ListEmptyComponent={<Text style={styles.emptyText}>No events match</Text>}
+        data={events}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <EventRow
-            event={item}
-            saved={savedIds.includes(item.id)} 
-            onPress={() => router.push(`/events/${item.id}`)}
-            onLongPress={() => toggleSave(item.id)} 
-          />
+          <View style={styles.card}>
+            <Text style={styles.title}>{item.title}</Text>
+            <Text>{item.date} | {item.place}</Text>
+          </View>
         )}
       />
     </View>
@@ -51,8 +33,8 @@ export default function EventsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  headerText: { padding: 15, fontSize: 16, backgroundColor: '#f0f0f0', textAlign: 'center' },
-  searchInput: { padding: 10, margin: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, fontSize: 16 },
-  emptyText: { textAlign: 'center', marginTop: 20, fontSize: 16, color: 'gray' },
+  container: { flex: 1, padding: 16 },
+  error: { color: 'red', marginBottom: 10 },
+  card: { padding: 16, borderWidth: 1, marginBottom: 10, borderRadius: 8 },
+  title: { fontSize: 18, fontWeight: 'bold' }
 });
