@@ -1,20 +1,16 @@
 import { ActivityIndicator, Pressable, Text, View, FlatList, StyleSheet, TextInput } from 'react-native';
-import { Link } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useEvents } from '../../src/hooks/useEvents';
+import { useSavedIds } from '../../src/hooks/useSavedIds';
+
+// МІНЕ ОСЫ ЖЕРДЕ ҚОС ЖАҚША ӨШІРІЛДІ:
+import EventRow from '../../src/components/EventRow';
 
 export default function EventsScreen() {
   const { data, isPending, isError, error, refetch, isRefetching } = useEvents();
   
   const [search, setSearch] = useState('');
-  const [savedIds, setSavedIds] = useState<number[]>([]);
-
-
-  const toggleSave = (id: number) => {
-    setSavedIds((prev) => 
-      prev.includes(id) ? prev.filter((savedId) => savedId !== id) : [...prev, id]
-    );
-  };
+  const { savedIds, toggleSaved } = useSavedIds();
 
   if (isPending) {
     return (
@@ -43,7 +39,7 @@ export default function EventsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.infoText}>Long-press an event to save it. Saved: {savedIds.length}</Text>
+      <Text style={styles.infoText}>Swipe or long-press an event to save it. Saved: {savedIds.length}</Text>
       
       <TextInput
         style={styles.searchInput}
@@ -57,21 +53,14 @@ export default function EventsScreen() {
         keyExtractor={(item) => item.id.toString()}
         refreshing={isRefetching}
         onRefresh={() => refetch()}
-        renderItem={({ item }) => {
-          const isSaved = savedIds.includes(item.id);
-          return (
-            <Link href={`/events/${item.id}`} asChild>
-              <Pressable 
-                style={styles.card}
-                onLongPress={() => toggleSave(item.id)}
-              >
-                <Text style={styles.title}>{item.title}</Text>
-                <Text>{item.date} — {item.place}</Text>
-                {isSaved && <Text style={styles.savedText}>★ Saved</Text>}
-              </Pressable>
-            </Link>
-          );
-        }}
+        renderItem={({ item }) => (
+          <EventRow
+            event={item}
+            onPress={() => {}} // Бұл жерге кейін event бетіне өтуді қосасыз
+            onToggleSaved={() => toggleSaved(item.id)}
+            saved={savedIds.includes(item.id)}
+          />
+        )}
       />
     </View>
   );
@@ -85,7 +74,4 @@ const styles = StyleSheet.create({
   errorTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
   button: { marginTop: 16, backgroundColor: '#007AFF', padding: 12, borderRadius: 8, minHeight: 44, justifyContent: 'center' },
   buttonText: { color: 'white', fontWeight: 'bold' },
-  card: { padding: 16, borderWidth: 1, marginBottom: 10, borderRadius: 8 },
-  title: { fontSize: 18, fontWeight: 'bold' },
-  savedText: { color: 'orange', fontWeight: 'bold', marginTop: 4 }
 });
