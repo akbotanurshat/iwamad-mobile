@@ -1,12 +1,12 @@
 import { ActivityIndicator, Pressable, Text, View, FlatList, StyleSheet, TextInput } from 'react-native';
 import { useState } from 'react';
+import { useRouter } from 'expo-router'; // Осыны қостық
 import { useEvents } from '../../src/hooks/useEvents';
 import { useSavedIds } from '../../src/hooks/useSavedIds';
-
-// МІНЕ ОСЫ ЖЕРДЕ ҚОС ЖАҚША ӨШІРІЛДІ:
 import EventRow from '../../src/components/EventRow';
 
 export default function EventsScreen() {
+  const router = useRouter(); // Осыны қостық
   const { data, isPending, isError, error, refetch, isRefetching } = useEvents();
   
   const [search, setSearch] = useState('');
@@ -56,7 +56,8 @@ export default function EventsScreen() {
         renderItem={({ item }) => (
           <EventRow
             event={item}
-            onPress={() => {}} // Бұл жерге кейін event бетіне өтуді қосасыз
+            // Батырма басқанда оқиға бетіне өту
+            onPress={() => router.push(`/events/${item.id}`)} 
             onToggleSaved={() => toggleSaved(item.id)}
             saved={savedIds.includes(item.id)}
           />
